@@ -1,0 +1,13 @@
+[package]
+name = "mpi_rsmcmc"
+version = "0.1.0"
+authors = ["Gu Junhua <jhgu@nao.cas.cn>"]
+
+[dependencies]
+mpi = "0.5.4"
+num-traits = ">0.2.*"
+rand = ">0.4.*"
+mpi-sys = "0.1.2"
+
+[dependencies.scorus]
+path="../scorus"
