@@ -33,7 +33,7 @@ fn only_sample_st<T, U, V, W, X, F, C>(
 where
     T: Float + NumCast + Rand + PartialOrd + SampleRange + Display + Equivalence,
     U: Rng,
-    V: Clone + IndexMut<usize, Output = T> + HasLen + AsRef<[T]> + AsRef<[T]> + AsMut<[T]>,
+    V: Clone + IndexMut<usize, Output = T> + HasLen + AsRef<[T]> + AsMut<[T]>,
     W: Clone + IndexMut<usize, Output = V> + HasLen + Drop + ItemSwapable,
     X: Clone
         + IndexMut<usize, Output = T>
@@ -202,7 +202,7 @@ pub fn sample<T, U, V, W, X, F, C>(
 where
     T: Float + NumCast + Rand + PartialOrd + SampleRange + Display + Equivalence,
     U: Rng,
-    V: Clone + IndexMut<usize, Output = T> + HasLen + AsRef<[T]> + AsRef<[T]> + AsMut<[T]>,
+    V: Clone + IndexMut<usize, Output = T> + HasLen + AsRef<[T]> + AsMut<[T]>,
     W: Clone + IndexMut<usize, Output = V> + HasLen + Drop + ItemSwapable,
     X: Clone
         + IndexMut<usize, Output = T>
