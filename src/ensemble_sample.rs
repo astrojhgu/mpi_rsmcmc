@@ -22,7 +22,7 @@ use scorus::utils::Resizeable;
 use scorus::mcmc::utils::scale_vec;
 
 pub fn sample<T, U, V, W, X, F, C>(
-    flogprob: &mut F,
+    flogprob: &F,
     ensemble_logprob: &(W, X),
     rng: &mut U,
     a: T,
@@ -46,7 +46,7 @@ where
         + Drop
         + AsRef<[T]>
         + AsMut<[T]>,
-    F: FnMut(&V) -> T,
+    F: Fn(&V) -> T+?Sized,
     C: CommunicatorCollectives<Raw = MPI_Comm>,
     [T]: BufferMut,
 {

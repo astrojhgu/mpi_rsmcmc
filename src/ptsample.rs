@@ -23,7 +23,7 @@ use scorus::mcmc::utils::{draw_z, scale_vec};
 use scorus::utils::{HasLen, ItemSwapable, Resizeable};
 
 fn only_sample_st<T, U, V, W, X, F, C>(
-    flogprob: &mut F,
+    flogprob: &F,
     ensemble_logprob: &(W, X),
     rng: &mut U,
     beta_list: &X,
@@ -43,7 +43,7 @@ where
         + ItemSwapable
         + AsRef<[T]>
         + AsMut<[T]>,
-    F: FnMut(&V) -> T,
+    F: Fn(&V) -> T+?Sized,
     C: CommunicatorCollectives<Raw = MPI_Comm>,
     [T]: BufferMut,
 {
@@ -191,7 +191,7 @@ where
 }
 
 pub fn sample<T, U, V, W, X, F, C>(
-    flogprob: &mut F,
+    flogprob: &F,
     ensemble_logprob: &(W, X),
     rng: &mut U,
     beta_list: &X,
@@ -212,7 +212,7 @@ where
         + ItemSwapable
         + AsRef<[T]>
         + AsMut<[T]>,
-    F: FnMut(&V) -> T,
+    F: Fn(&V) -> T+?Sized,
     C: CommunicatorCollectives<Raw = MPI_Comm>,
     [T]: BufferMut,
 {
