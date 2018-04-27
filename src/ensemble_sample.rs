@@ -46,7 +46,7 @@ where
         + Drop
         + AsRef<[T]>
         + AsMut<[T]>,
-    F: Fn(&V) -> T+?Sized,
+    F: Fn(&V) -> T + ?Sized,
     C: CommunicatorCollectives<Raw = MPI_Comm>,
     [T]: BufferMut,
 {

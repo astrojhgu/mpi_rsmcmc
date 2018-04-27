@@ -1,9 +1,9 @@
 use std::fs::File;
 use std::io::Write;
 
-extern crate quickersort;
 extern crate mpi;
 extern crate mpi_rsmcmc;
+extern crate quickersort;
 extern crate rand;
 use rand::thread_rng;
 
@@ -23,12 +23,11 @@ fn bimodal(x: &Vec<f64>) -> f64 {
     -(x[0] - mu) * (x[0] - mu) / (2.0 * sigma * sigma) - sigma.ln()
 }
 
-
 fn main() {
-    let universe=mpi::initialize().unwrap();
-    let world=universe.world();
-    let rank=world.rank();
-    let mut outfile=File::create(&format!("data_{}.qdp", rank)).unwrap();
+    let universe = mpi::initialize().unwrap();
+    let world = universe.world();
+    let rank = world.rank();
+    let mut outfile = File::create(&format!("data_{}.qdp", rank)).unwrap();
 
     let x = vec![
         vec![0.10, 0.20],
@@ -83,15 +82,22 @@ fn main() {
 
     let mut xy = (x, y);
 
-
     for k in 0..niter {
         //let aaa = ff(foo, &(x, y), &mut rng, 2.0, 1);
 
-        let aa=ptsample(&mut bimodal, &xy, &mut rng, &blist, k%10==0, 2.0, &world );
-        xy=aa.unwrap();
+        let aa = ptsample(
+            &mut bimodal,
+            &xy,
+            &mut rng,
+            &blist,
+            k % 10 == 0,
+            2.0,
+            &world,
+        );
+        xy = aa.unwrap();
 
-        for i in 0..nbeta{
-            results[i].push(xy.0[i*nwalkers+0][0]);
+        for i in 0..nbeta {
+            results[i].push(xy.0[i * nwalkers + 0][0]);
         }
     }
 
