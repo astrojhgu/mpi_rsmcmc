@@ -1,21 +1,22 @@
-use std::ops::IndexMut;
 use std::cmp::PartialOrd;
 use std::fmt::Display;
+use std::ops::IndexMut;
 
 use num_traits::float::Float;
-use num_traits::NumCast;
 use num_traits::identities::{one, zero};
+use num_traits::NumCast;
 
-use rand::{Rand, Rng};
 use rand::distributions::range::SampleRange;
+use rand::distributions::{Distribution, Standard};
+use rand::Rng;
 //use std::sync::Arc;
 
 use mpi::collective::CommunicatorCollectives;
-use mpi_sys::MPI_Comm;
 use mpi::collective::Root;
 use mpi::datatype::BufferMut;
-use mpi::topology::Rank;
 use mpi::datatype::Equivalence;
+use mpi::topology::Rank;
+use mpi_sys::MPI_Comm;
 
 use scorus::mcmc::mcmc_errors::McmcErr;
 use scorus::mcmc::ptsample::swap_walkers;
@@ -31,7 +32,8 @@ fn only_sample_st<T, U, V, W, X, F, C>(
     comm: &C,
 ) -> Result<(W, X), McmcErr>
 where
-    T: Float + NumCast + Rand + PartialOrd + SampleRange + Display + Equivalence,
+    T: Float + NumCast + PartialOrd + SampleRange + Display + Equivalence,
+    Standard: Distribution<T>,
     U: Rng,
     V: Clone + IndexMut<usize, Output = T> + HasLen + AsRef<[T]> + AsMut<[T]>,
     W: Clone + IndexMut<usize, Output = V> + HasLen + Drop + ItemSwapable,
@@ -200,7 +202,8 @@ pub fn sample<T, U, V, W, X, F, C>(
     comm: &C,
 ) -> Result<(W, X), McmcErr>
 where
-    T: Float + NumCast + Rand + PartialOrd + SampleRange + Display + Equivalence,
+    T: Float + NumCast + PartialOrd + SampleRange + Display + Equivalence,
+    Standard: Distribution<T>,
     U: Rng,
     V: Clone + IndexMut<usize, Output = T> + HasLen + AsRef<[T]> + AsMut<[T]>,
     W: Clone + IndexMut<usize, Output = V> + HasLen + Drop + ItemSwapable,
