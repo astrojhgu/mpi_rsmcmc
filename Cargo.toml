@@ -7,8 +7,8 @@ authors = ["Gu Junhua <jhgu@nao.cas.cn>"]
 mpi = "0.5.4"
 num-traits = ">0.2.*"
 rand = ">=0.5.*"
-mpi-sys = "0.1.2"
-quickersort = ">=3.0.0"
+mpi-sys = ">=0.1"
+quickersort = ">=3.0.*"
 
 [dependencies.scorus]
 path="../scorus"
