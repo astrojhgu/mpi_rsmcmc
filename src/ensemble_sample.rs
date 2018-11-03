@@ -5,7 +5,7 @@ use num_traits::identities::{one, zero};
 use num_traits::NumCast;
 use std::ops::IndexMut;
 
-use rand::distributions::range::SampleRange;
+use rand::distributions::uniform::SampleUniform;
 use rand::distributions::{Distribution, Standard};
 use rand::Rng;
 //use std::sync::Arc;
@@ -30,7 +30,7 @@ pub fn sample<T, U, V, W, X, F, C>(
     comm: &C,
 ) -> Result<(W, X), McmcErr>
 where
-    T: Float + NumCast + std::cmp::PartialOrd + SampleRange + std::fmt::Display + Equivalence,
+    T: Float + NumCast + std::cmp::PartialOrd + SampleUniform + std::fmt::Display + Equivalence,
     Standard: Distribution<T>,
     U: Rng,
     V: Clone + IndexMut<usize, Output = T> + HasLen + AsRef<[T]> + AsMut<[T]>,
@@ -87,7 +87,7 @@ where
         }
         walker_group[gid].push(i);
         walker_group_id.push(gid);
-        rvec.push(rng.gen_range(zero(), one()));
+        rvec.push(rng.gen_range(zero::<T>(), one::<T>()));
         jvec.push(rng.gen_range(0, half_nwalkers));
         zvec.push(draw_z(rng, a));
     }

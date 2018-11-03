@@ -1,14 +1,14 @@
-[package]
-name = "mpi_rsmcmc"
-version = "0.1.0"
-authors = ["Gu Junhua <jhgu@nao.cas.cn>"]
-
 [dependencies]
-mpi = "0.5.4"
-num-traits = ">0.2.*"
-rand = ">=0.5.*"
-mpi-sys = ">=0.1"
-quickersort = ">=3.0.*"
+mpi = '0.5.4'
+mpi-sys = '0.1.2'
+num-traits = '0.2.6'
+quickersort = '3.0.1'
+rand = '0.6.0-pre.1'
 
 [dependencies.scorus]
-path="../scorus"
+path = '../scorus'
+
+[package]
+authors = ['Gu Junhua <jhgu@nao.cas.cn>']
+name = 'mpi_rsmcmc'
+version = '0.1.0'

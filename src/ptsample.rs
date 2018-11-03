@@ -6,7 +6,7 @@ use num_traits::float::Float;
 use num_traits::identities::{one, zero};
 use num_traits::NumCast;
 
-use rand::distributions::range::SampleRange;
+use rand::distributions::uniform::SampleUniform;
 use rand::distributions::{Distribution, Standard};
 use rand::Rng;
 //use std::sync::Arc;
@@ -21,7 +21,7 @@ use mpi_sys::MPI_Comm;
 use scorus::mcmc::mcmc_errors::McmcErr;
 use scorus::mcmc::ptsample::swap_walkers;
 use scorus::mcmc::utils::{draw_z, scale_vec};
-use scorus::utils::{HasLen, ItemSwapable, Resizeable};
+use scorus::utils::{HasLen, InitFromLen, ItemSwapable, Resizeable};
 
 fn only_sample_st<T, U, V, W, X, F, C>(
     flogprob: &F,
@@ -32,7 +32,7 @@ fn only_sample_st<T, U, V, W, X, F, C>(
     comm: &C,
 ) -> Result<(W, X), McmcErr>
 where
-    T: Float + NumCast + PartialOrd + SampleRange + Display + Equivalence,
+    T: Float + NumCast + PartialOrd + SampleUniform + Display + Equivalence,
     Standard: Distribution<T>,
     U: Rng,
     V: Clone + IndexMut<usize, Output = T> + HasLen + AsRef<[T]> + AsMut<[T]>,
@@ -40,6 +40,7 @@ where
     X: Clone
         + IndexMut<usize, Output = T>
         + HasLen
+        + InitFromLen
         + Resizeable<ElmType = T>
         + Drop
         + ItemSwapable
@@ -107,7 +108,7 @@ where
             }
             walker_group[i][gid].push(j);
             walker_group_id[i].push(gid);
-            rvec[i].push(rng.gen_range(zero(), one()));
+            rvec[i].push(rng.gen_range(zero::<T>(), one::<T>()));
             jvec[i].push(rng.gen_range(0, half_nwalkers));
             zvec[i].push(draw_z(rng, a));
         }
@@ -202,7 +203,7 @@ pub fn sample<T, U, V, W, X, F, C>(
     comm: &C,
 ) -> Result<(W, X), McmcErr>
 where
-    T: Float + NumCast + PartialOrd + SampleRange + Display + Equivalence,
+    T: Float + NumCast + PartialOrd + SampleUniform + Display + Equivalence,
     Standard: Distribution<T>,
     U: Rng,
     V: Clone + IndexMut<usize, Output = T> + HasLen + AsRef<[T]> + AsMut<[T]>,
@@ -210,6 +211,7 @@ where
     X: Clone
         + IndexMut<usize, Output = T>
         + HasLen
+        + InitFromLen
         + Resizeable<ElmType = T>
         + Drop
         + ItemSwapable
