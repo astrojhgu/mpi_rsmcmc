@@ -1,6 +1,8 @@
 use std::cmp::PartialOrd;
 use std::fmt::Display;
 use std::ops::IndexMut;
+use std::ops::{Add, Sub, Mul};
+
 
 use num_traits::float::Float;
 use num_traits::identities::{one, zero};
@@ -18,6 +20,8 @@ use mpi::datatype::Equivalence;
 use mpi::topology::Rank;
 use mpi_sys::MPI_Comm;
 
+
+use scorus::linear_space::LinearSpace;
 use scorus::mcmc::mcmc_errors::McmcErr;
 use scorus::mcmc::ptsample::swap_walkers;
 use scorus::mcmc::utils::{draw_z, scale_vec};
@@ -35,7 +39,10 @@ where
     T: Float + NumCast + PartialOrd + SampleUniform + Display + Equivalence,
     Standard: Distribution<T>,
     U: Rng,
-    V: Clone + IndexMut<usize, Output = T> + HasLen + AsRef<[T]> + AsMut<[T]>,
+    V: Clone + LinearSpace<T>+AsMut<[T]>,
+    for<'a> &'a V: Add<Output = V>,
+    for<'a> &'a V: Sub<Output = V>,
+    for<'a> &'a V: Mul<T, Output = V>,
     W: Clone + IndexMut<usize, Output = V> + HasLen + Drop + ItemSwapable,
     X: Clone
         + IndexMut<usize, Output = T>
@@ -73,7 +80,7 @@ where
         return Err(McmcErr::NWalkersMismatchesNBeta);
     }
 
-    let ndims: T = NumCast::from(ensemble[0].len()).unwrap();
+    let ndims: T = NumCast::from(ensemble[0].dimension()).unwrap();
 
     let half_nwalkers = nwalkers / 2;
     let mut walker_group: Vec<Vec<Vec<usize>>> = Vec::new();
@@ -206,7 +213,10 @@ where
     T: Float + NumCast + PartialOrd + SampleUniform + Display + Equivalence,
     Standard: Distribution<T>,
     U: Rng,
-    V: Clone + IndexMut<usize, Output = T> + HasLen + AsRef<[T]> + AsMut<[T]>,
+    V: Clone + LinearSpace<T>+AsMut<[T]>,
+    for<'a> &'a V: Add<Output = V>,
+    for<'a> &'a V: Sub<Output = V>,
+    for<'a> &'a V: Mul<T, Output = V>,
     W: Clone + IndexMut<usize, Output = V> + HasLen + Drop + ItemSwapable,
     X: Clone
         + IndexMut<usize, Output = T>

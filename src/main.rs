@@ -5,15 +5,21 @@ extern crate mpi;
 extern crate mpi_rsmcmc;
 extern crate quickersort;
 extern crate rand;
+extern crate scorus;
+
 use rand::thread_rng;
 
 use quickersort::sort_by;
+
 
 use mpi::topology::Communicator;
 use mpi_rsmcmc::ensemble_sample::sample;
 use mpi_rsmcmc::ptsample::sample as ptsample;
 
-fn bimodal(x: &Vec<f64>) -> f64 {
+
+use scorus::linear_space::type_wrapper::LsVec;
+
+fn bimodal(x: &LsVec<f64,Vec<f64>>) -> f64 {
     if x[0] < -15.0 || x[0] > 15.0 || x[1] < 0.0 || x[1] > 1.0 {
         return -std::f64::INFINITY;
     }
@@ -29,7 +35,7 @@ fn main() {
     let rank = world.rank();
     let mut outfile = File::create(&format!("data_{}.qdp", rank)).unwrap();
 
-    let x = vec![
+    let x:Vec<_> = vec![
         vec![0.10, 0.20],
         vec![0.20, 0.10],
         vec![0.23, 0.21],
@@ -62,7 +68,7 @@ fn main() {
         vec![0.20, 0.24],
         vec![0.20, 0.12],
         vec![0.23, 0.12],
-    ];
+    ].into_iter().map(|x|{LsVec(x)}).collect();
     let y = vec![0.0];
     let mut rng = rand::thread_rng();
     //let mut rng = rand::StdRng::new().unwrap();
