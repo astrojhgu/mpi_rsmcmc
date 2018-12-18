@@ -1,9 +1,9 @@
-use std;
-use std::ops::{Add, Sub, Mul};
 use num_traits::float::Float;
 use num_traits::identities::{one, zero};
 use num_traits::NumCast;
+use std;
 use std::ops::IndexMut;
+use std::ops::{Add, Mul, Sub};
 
 use rand::distributions::uniform::SampleUniform;
 use rand::distributions::{Distribution, Standard};
@@ -23,7 +23,6 @@ use scorus::mcmc::utils::scale_vec;
 use scorus::utils::HasLen;
 use scorus::utils::Resizeable;
 
-
 pub fn sample<T, U, V, W, X, F, C>(
     flogprob: &F,
     ensemble_logprob: &(W, X),
@@ -35,7 +34,7 @@ where
     T: Float + NumCast + std::cmp::PartialOrd + SampleUniform + std::fmt::Display + Equivalence,
     Standard: Distribution<T>,
     U: Rng,
-    V: Clone + LinearSpace<T>+AsMut<[T]>,
+    V: Clone + LinearSpace<T> + AsMut<[T]>,
     for<'a> &'a V: Add<Output = V>,
     for<'a> &'a V: Sub<Output = V>,
     for<'a> &'a V: Mul<T, Output = V>,
@@ -124,7 +123,7 @@ where
     };
 
     for k in (rank as usize * ntasks_per_node)..((rank + 1) as usize * ntasks_per_node) {
-        if k > nwalkers {
+        if k >= nwalkers {
             break;
         }
         let lp_last_y = match lp_cached {
