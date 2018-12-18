@@ -145,7 +145,7 @@ where
     };
 
     for n in (rank as usize * ntasks_per_node)..((rank + 1) as usize * ntasks_per_node) {
-        if n > nwalkers * nbeta {
+        if n >= nwalkers * nbeta {
             break;
         }
 

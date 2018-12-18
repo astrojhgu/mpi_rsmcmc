@@ -123,7 +123,7 @@ where
     };
 
     for k in (rank as usize * ntasks_per_node)..((rank + 1) as usize * ntasks_per_node) {
-        if k > nwalkers {
+        if k >= nwalkers {
             break;
         }
         let lp_last_y = match lp_cached {
