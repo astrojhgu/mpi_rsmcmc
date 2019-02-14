@@ -3,7 +3,7 @@ mpi = '0.5.4'
 mpi-sys = '0.1.2'
 num-traits = '0.2.6'
 quickersort = '3.0.1'
-rand = '0.6.0-pre.1'
+rand = '0.6.5'
 
 [dependencies.scorus]
 path = '../scorus'
