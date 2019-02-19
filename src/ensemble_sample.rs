@@ -1,3 +1,4 @@
+#![allow(clippy::many_single_char_names)]
 use num_traits::float::Float;
 use num_traits::identities::{one, zero};
 use num_traits::NumCast;
@@ -126,13 +127,12 @@ where
         if k >= nwalkers {
             break;
         }
-        let lp_last_y = match lp_cached {
-            false => {
-                let yy1 = flogprob(&ensemble[k]);
-                result_logprob[k] = yy1;
-                yy1
-            }
-            _ => cached_logprob[k],
+        let lp_last_y = if !lp_cached {
+            let yy1 = flogprob(&ensemble[k]);
+            result_logprob[k] = yy1;
+            yy1
+        } else {
+            cached_logprob[k]
         };
 
         let i = walker_group_id[k];

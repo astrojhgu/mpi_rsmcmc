@@ -1,3 +1,5 @@
+#![allow(clippy::many_single_char_names)]
+
 use std::cmp::PartialOrd;
 use std::fmt::Display;
 use std::ops::IndexMut;
@@ -151,15 +153,14 @@ where
 
         let ibeta = n / nwalkers;
         let k = n - ibeta * nwalkers;
-        let lp_last_y = match lp_cached {
-            false => {
-                //let yy1 = flogprob(&ensemble[ibeta * nwalkers + k]);
-                let yy1 = flogprob(&ensemble[ibeta * nwalkers + k]);
+        let lp_last_y = if !lp_cached {
+            //let yy1 = flogprob(&ensemble[ibeta * nwalkers + k]);
+            let yy1 = flogprob(&ensemble[ibeta * nwalkers + k]);
 
-                result_logprob[ibeta * nwalkers + k] = yy1;
-                yy1
-            }
-            _ => cached_logprob[ibeta * nwalkers + k],
+            result_logprob[ibeta * nwalkers + k] = yy1;
+            yy1
+        } else {
+            cached_logprob[ibeta * nwalkers + k]
         };
 
         let i = walker_group_id[ibeta][k];

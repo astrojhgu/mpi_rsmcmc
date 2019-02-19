@@ -1,3 +1,5 @@
+#![allow(clippy::identity_op)]
+
 use std::fs::File;
 use std::io::Write;
 
@@ -7,12 +9,9 @@ extern crate quickersort;
 extern crate rand;
 extern crate scorus;
 
-use rand::thread_rng;
-
 use quickersort::sort_by;
 
 use mpi::topology::Communicator;
-use mpi_rsmcmc::ensemble_sample::sample;
 use mpi_rsmcmc::ptsample::sample as ptsample;
 
 use scorus::linear_space::type_wrapper::LsVec;
@@ -67,7 +66,7 @@ fn main() {
         vec![0.20, 0.12],
         vec![0.23, 0.12],
     ].into_iter()
-    .map(|x| LsVec(x))
+    .map(LsVec)
     .collect();
     let y = vec![0.0];
     let mut rng = rand::thread_rng();
@@ -76,11 +75,20 @@ fn main() {
     //let aa=(x,y);
     //let mut x=shuffle(&x, &mut rng);
 
-    let blist = vec![1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625, 0.0078125];
+    let blist = vec![
+        1.0,
+        0.5,
+        0.25,
+        0.125,
+        0.0625,
+        0.03125,
+        0.015_625,
+        0.007_812_5,
+    ];
     let nbeta = blist.len();
     let nwalkers = x.len() / nbeta;
     let mut results: Vec<Vec<f64>> = Vec::new();
-    let niter = 100000;
+    let niter = 100_000;
     for i in 0..nbeta {
         results.push(Vec::new());
         results[i].reserve(niter);
@@ -91,24 +99,16 @@ fn main() {
     for k in 0..niter {
         //let aaa = ff(foo, &(x, y), &mut rng, 2.0, 1);
 
-        let aa = ptsample(
-            &mut bimodal,
-            &xy,
-            &mut rng,
-            &blist,
-            k % 10 == 0,
-            2.0,
-            &world,
-        );
+        let aa = ptsample(&bimodal, &xy, &mut rng, &blist, k % 10 == 0, 2.0, &world);
         xy = aa.unwrap();
 
-        for i in 0..nbeta {
-            results[i].push(xy.0[i * nwalkers + 0][0]);
+        for (i, res) in results.iter_mut().enumerate().take(nbeta) {
+            res.push(xy.0[i * nwalkers + 0][0]);
         }
     }
 
-    for i in 0..nbeta {
-        sort_by(&mut results[i], &|x, y| {
+    for res in results.iter_mut().take(nbeta) {
+        sort_by(res, &|x, y| {
             if x > y {
                 std::cmp::Ordering::Greater
             } else if x < y {
@@ -117,9 +117,9 @@ fn main() {
                 std::cmp::Ordering::Equal
             }
         });
-        for j in 0..results[i].len() {
-            writeln!(outfile, "{} {}", results[i][j], j);
+        for (j, rj) in res.iter().enumerate() {
+            writeln!(outfile, "{} {}", rj, j).unwrap();
         }
-        writeln!(outfile, "no no no");
+        writeln!(outfile, "no no no").unwrap();
     }
 }
