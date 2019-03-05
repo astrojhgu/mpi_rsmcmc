@@ -19,7 +19,6 @@ use mpi::collective::Root;
 use mpi::datatype::BufferMut;
 use mpi::datatype::Equivalence;
 use mpi::topology::Rank;
-use mpi_sys::MPI_Comm;
 
 use scorus::linear_space::LinearSpace;
 use scorus::mcmc::mcmc_errors::McmcErr;
@@ -43,18 +42,17 @@ where
     for<'a> &'a V: Add<Output = V>,
     for<'a> &'a V: Sub<Output = V>,
     for<'a> &'a V: Mul<T, Output = V>,
-    W: Clone + IndexMut<usize, Output = V> + HasLen + Drop + ItemSwapable,
+    W: Clone + IndexMut<usize, Output = V> + HasLen + ItemSwapable,
     X: Clone
         + IndexMut<usize, Output = T>
         + HasLen
         + InitFromLen
         + Resizeable<ElmType = T>
-        + Drop
         + ItemSwapable
         + AsRef<[T]>
         + AsMut<[T]>,
     F: Fn(&V) -> T + ?Sized,
-    C: CommunicatorCollectives<Raw = MPI_Comm>,
+    C: CommunicatorCollectives,
     [T]: BufferMut,
 {
     let rank = comm.rank();
@@ -216,18 +214,17 @@ where
     for<'a> &'a V: Add<Output = V>,
     for<'a> &'a V: Sub<Output = V>,
     for<'a> &'a V: Mul<T, Output = V>,
-    W: Clone + IndexMut<usize, Output = V> + HasLen + Drop + ItemSwapable,
+    W: Clone + IndexMut<usize, Output = V> + HasLen + ItemSwapable,
     X: Clone
         + IndexMut<usize, Output = T>
         + HasLen
         + InitFromLen
         + Resizeable<ElmType = T>
-        + Drop
         + ItemSwapable
         + AsRef<[T]>
         + AsMut<[T]>,
     F: Fn(&V) -> T + ?Sized,
-    C: CommunicatorCollectives<Raw = MPI_Comm>,
+    C: CommunicatorCollectives,
     [T]: BufferMut,
 {
     let perform_swap = {
