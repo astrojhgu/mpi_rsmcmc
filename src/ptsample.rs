@@ -1,7 +1,7 @@
 #![allow(clippy::many_single_char_names)]
 
 use std::cmp::PartialOrd;
-use std::fmt::Display;
+use std::fmt::Debug;
 use std::ops::IndexMut;
 use std::ops::{Add, Mul, Sub};
 
@@ -35,7 +35,7 @@ fn only_sample_st<T, U, V, W, X, F, C>(
     comm: &C,
 ) -> Result<(W, X), McmcErr>
 where
-    T: Float + NumCast + PartialOrd + SampleUniform + Display + Equivalence,
+    T: Float + NumCast + PartialOrd + SampleUniform + Debug + Equivalence,
     Standard: Distribution<T>,
     U: Rng,
     V: Clone + LinearSpace<T> + AsMut<[T]>,
@@ -207,7 +207,7 @@ pub fn sample<T, U, V, W, X, F, C>(
     comm: &C,
 ) -> Result<(W, X), McmcErr>
 where
-    T: Float + NumCast + PartialOrd + SampleUniform + Display + Equivalence,
+    T: Float + NumCast + PartialOrd + SampleUniform + Debug + Equivalence,
     Standard: Distribution<T>,
     U: Rng,
     V: Clone + LinearSpace<T> + AsMut<[T]>,

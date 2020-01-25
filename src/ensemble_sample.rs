@@ -31,7 +31,7 @@ pub fn sample<T, U, V, W, X, F, C>(
     comm: &C,
 ) -> Result<(W, X), McmcErr>
 where
-    T: Float + NumCast + std::cmp::PartialOrd + SampleUniform + std::fmt::Display + Equivalence,
+    T: Float + NumCast + std::cmp::PartialOrd + SampleUniform + std::fmt::Debug + Equivalence,
     Standard: Distribution<T>,
     U: Rng,
     V: Clone + LinearSpace<T> + AsMut<[T]>,
