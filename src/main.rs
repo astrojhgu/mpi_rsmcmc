@@ -32,7 +32,7 @@ fn main() {
     let rank = world.rank();
     let mut outfile = File::create(&format!("data_{}.qdp", rank)).unwrap();
 
-    let x: Vec<_> = vec![
+    let mut ensemble: Vec<_> = vec![
         vec![0.10, 0.20],
         vec![0.20, 0.10],
         vec![0.23, 0.21],
@@ -68,7 +68,9 @@ fn main() {
     ].into_iter()
     .map(LsVec)
     .collect();
-    let y = vec![0.0];
+    let mut logprob:Vec<_> = ensemble.iter().map(|x|{
+        bimodal(x)
+    }).collect();
     let mut rng = rand::thread_rng();
     //let mut rng = rand::StdRng::new().unwrap();
 
@@ -86,7 +88,7 @@ fn main() {
         0.007_812_5,
     ];
     let nbeta = blist.len();
-    let nwalkers = x.len() / nbeta;
+    let nwalkers = ensemble.len() / nbeta;
     let mut results: Vec<Vec<f64>> = Vec::new();
     let niter = 100_000;
     for i in 0..nbeta {
@@ -94,16 +96,13 @@ fn main() {
         results[i].reserve(niter);
     }
 
-    let mut xy = (x, y);
-
     for k in 0..niter {
         //let aaa = ff(foo, &(x, y), &mut rng, 2.0, 1);
 
-        let aa = ptsample(&bimodal, &xy, &mut rng, &blist, k % 10 == 0, 2.0, &world);
-        xy = aa.unwrap();
-
+        ptsample(&bimodal, &mut ensemble, &mut logprob, &mut rng, &blist, k % 10 == 0, 2.0, &world);
+        
         for (i, res) in results.iter_mut().enumerate().take(nbeta) {
-            res.push(xy.0[i * nwalkers + 0][0]);
+            res.push(ensemble[i * nwalkers + 0][0]);
         }
     }
 

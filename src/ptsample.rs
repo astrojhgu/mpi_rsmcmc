@@ -22,18 +22,19 @@ use mpi::topology::Rank;
 
 use scorus::linear_space::LinearSpace;
 use scorus::mcmc::mcmc_errors::McmcErr;
-use scorus::mcmc::ptsample::swap_walkers;
+use scorus::mcmc::utils::swap_walkers;
 use scorus::mcmc::utils::{draw_z, scale_vec};
 use scorus::utils::{HasLen, InitFromLen, ItemSwapable, Resizeable};
 
-fn only_sample_st<T, U, V, W, X, F, C>(
+fn only_sample_st<T, U, V, F, C>(
     flogprob: &F,
-    ensemble_logprob: &(W, X),
+    ensemble: &mut [V], 
+    logprob: &mut [T],
     rng: &mut U,
-    beta_list: &X,
+    beta_list: &[T],
     a: T,
     comm: &C,
-) -> Result<(W, X), McmcErr>
+) 
 where
     T: Float + NumCast + PartialOrd + SampleUniform + Debug + Equivalence,
     Standard: Distribution<T>,
@@ -42,15 +43,6 @@ where
     for<'a> &'a V: Add<Output = V>,
     for<'a> &'a V: Sub<Output = V>,
     for<'a> &'a V: Mul<T, Output = V>,
-    W: Clone + IndexMut<usize, Output = V> + HasLen + ItemSwapable,
-    X: Clone
-        + IndexMut<usize, Output = T>
-        + HasLen
-        + InitFromLen
-        + Resizeable<ElmType = T>
-        + ItemSwapable
-        + AsRef<[T]>
-        + AsMut<[T]>,
     F: Fn(&V) -> T + ?Sized,
     C: CommunicatorCollectives,
     [T]: BufferMut,
@@ -59,24 +51,13 @@ where
     let root_rank = 0;
     let root_process = comm.process_at_rank(root_rank);
 
-    let (ref ensemble, ref cached_logprob) = *ensemble_logprob;
-
-    let mut result_ensemble = ensemble.clone();
-    let mut result_logprob = cached_logprob.clone();
-
     let nbeta = beta_list.len();
     let nwalkers = ensemble.len() / nbeta;
 
-    if nwalkers == 0 {
-        return Err(McmcErr::NWalkersIsZero);
-    }
-    if nwalkers % 2 != 0 {
-        return Err(McmcErr::NWalkersIsNotEven);
-    }
-
-    if nbeta * nwalkers != ensemble.len() {
-        return Err(McmcErr::NWalkersMismatchesNBeta);
-    }
+    assert!(nwalkers>0);
+    assert!(nwalkers%2==0);
+    assert!(ensemble.len()==logprob.len());
+    assert!(nbeta*nwalkers==ensemble.len());
 
     let ndims: T = NumCast::from(ensemble[0].dimension()).unwrap();
 
@@ -127,11 +108,7 @@ where
         }
     }
 
-    let lp_cached = result_logprob.len() == result_ensemble.len();
-
-    if !lp_cached {
-        result_logprob.resize(result_ensemble.len(), T::zero());
-    }
+    
     //let lp_cached=cached_logprob.len()!=0;
     let comm_size = comm.size() as usize;
 
@@ -151,15 +128,7 @@ where
 
         let ibeta = n / nwalkers;
         let k = n - ibeta * nwalkers;
-        let lp_last_y = if !lp_cached {
-            //let yy1 = flogprob(&ensemble[ibeta * nwalkers + k]);
-            let yy1 = flogprob(&ensemble[ibeta * nwalkers + k]);
-
-            result_logprob[ibeta * nwalkers + k] = yy1;
-            yy1
-        } else {
-            cached_logprob[ibeta * nwalkers + k]
-        };
+        let lp_last_y = logprob[ibeta * nwalkers + k];
 
         let i = walker_group_id[ibeta][k];
         let j = jvec[ibeta][k];
@@ -177,8 +146,8 @@ where
         let q = ((ndims - one::<T>()) * (z.ln()) + delta_lp * beta).exp();
 
         if r <= q {
-            result_ensemble[ibeta * nwalkers + k] = new_y;
-            result_logprob[ibeta * nwalkers + k] = lp_y;
+            ensemble[ibeta * nwalkers + k] = new_y;
+            logprob[ibeta * nwalkers + k] = lp_y;
         }
     }
 
@@ -189,23 +158,22 @@ where
         let temp_root = comm.process_at_rank(temp_root_id);
 
         temp_root.broadcast_into(AsMut::<[T]>::as_mut(
-            &mut result_ensemble[ibeta * nwalkers + k],
+            &mut ensemble[ibeta * nwalkers + k],
         ));
-        temp_root.broadcast_into(&mut result_logprob[ibeta * nwalkers + k]);
+        temp_root.broadcast_into(&mut logprob[ibeta * nwalkers + k]);
     }
-
-    Ok((result_ensemble, result_logprob))
 }
 
-pub fn sample<T, U, V, W, X, F, C>(
+pub fn sample<T, U, V, F, C>(
     flogprob: &F,
-    ensemble_logprob: &(W, X),
+    ensemble: &mut [V],
+    logprob: &mut [T],
     rng: &mut U,
-    beta_list: &X,
+    beta_list: &[T],
     perform_swap: bool,
     a: T,
     comm: &C,
-) -> Result<(W, X), McmcErr>
+)
 where
     T: Float + NumCast + PartialOrd + SampleUniform + Debug + Equivalence,
     Standard: Distribution<T>,
@@ -214,15 +182,6 @@ where
     for<'a> &'a V: Add<Output = V>,
     for<'a> &'a V: Sub<Output = V>,
     for<'a> &'a V: Mul<T, Output = V>,
-    W: Clone + IndexMut<usize, Output = V> + HasLen + ItemSwapable,
-    X: Clone
-        + IndexMut<usize, Output = T>
-        + HasLen
-        + InitFromLen
-        + Resizeable<ElmType = T>
-        + ItemSwapable
-        + AsRef<[T]>
-        + AsMut<[T]>,
     F: Fn(&V) -> T + ?Sized,
     C: CommunicatorCollectives,
     [T]: BufferMut,
@@ -234,20 +193,16 @@ where
         perform_swap
     };
     if perform_swap {
-        let mut ensemble_logprob1 = (ensemble_logprob.0.clone(), ensemble_logprob.1.clone());
-        swap_walkers(&mut ensemble_logprob1, rng, beta_list)?;
+        swap_walkers(ensemble, logprob, rng, beta_list);
 
         let root = comm.process_at_rank(0);
-        for i in 0..ensemble_logprob1.0.len() {
-            root.broadcast_into(AsMut::<[T]>::as_mut(&mut ensemble_logprob1.0[i]));
+        for i in 0..ensemble.len() {
+            root.broadcast_into(AsMut::<[T]>::as_mut(&mut ensemble[i]));
         }
 
-        for i in 0..ensemble_logprob1.1.len() {
-            root.broadcast_into(&mut ensemble_logprob1.1[i]);
+        for i in 0..logprob.len() {
+            root.broadcast_into(&mut logprob[i]);
         }
-
-        only_sample_st(flogprob, &ensemble_logprob1, rng, beta_list, a, comm)
-    } else {
-        only_sample_st(flogprob, ensemble_logprob, rng, beta_list, a, comm)
     }
+    only_sample_st(flogprob, ensemble,logprob, rng, beta_list, a, comm);
 }
