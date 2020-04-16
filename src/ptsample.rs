@@ -206,3 +206,57 @@ where
     }
     only_sample_st(flogprob, ensemble,logprob, rng, beta_list, a, comm);
 }
+
+
+fn init<T, V, F, C>(
+    flogprob: &F,
+    ensemble: &[V], 
+    logprob: &mut [T],
+    comm: &C,
+) 
+where
+    T: Float + NumCast + PartialOrd + SampleUniform + Debug + Equivalence,
+    Standard: Distribution<T>,
+    V: Clone + LinearSpace<T> + AsMut<[T]>,
+    for<'a> &'a V: Add<Output = V>,
+    for<'a> &'a V: Sub<Output = V>,
+    for<'a> &'a V: Mul<T, Output = V>,
+    F: Fn(&V) -> T + ?Sized,
+    C: CommunicatorCollectives,
+    [T]: BufferMut,
+{
+    let rank = comm.rank();
+    let root_rank = 0;
+    let root_process = comm.process_at_rank(root_rank);
+
+    let nwalkers = ensemble.len();
+
+    let ndims: T = NumCast::from(ensemble[0].dimension()).unwrap();
+    
+    //let lp_cached=cached_logprob.len()!=0;
+    let comm_size = comm.size() as usize;
+
+    let ntasks_per_node = {
+        let x = nwalkers / comm_size;
+        if x * comm_size >= nwalkers {
+            x
+        } else {
+            x + 1
+        }
+    };
+
+    for n in (rank as usize * ntasks_per_node)..((rank + 1) as usize * ntasks_per_node) {
+        if n >= nwalkers {
+            break;
+        }
+
+        let lp_y = flogprob(&ensemble[n]);
+        logprob[n] = lp_y;
+    }
+
+    for n in 0..nwalkers {
+        let temp_root_id = (n / ntasks_per_node) as Rank;
+        let temp_root = comm.process_at_rank(temp_root_id);
+        temp_root.broadcast_into(&mut logprob[n]);
+    }
+}
