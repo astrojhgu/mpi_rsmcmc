@@ -23,13 +23,14 @@ use scorus::mcmc::utils::scale_vec;
 use scorus::utils::HasLen;
 use scorus::utils::Resizeable;
 
-pub fn sample<T, U, V, W, X, F, C>(
+pub fn sample<T, U, V, F, C>(
     flogprob: &F,
-    ensemble_logprob: &(W, X),
+    ensemble: &mut [V],
+    cached_lp: &mut [T],
     rng: &mut U,
     a: T,
     comm: &C,
-) -> Result<(W, X), McmcErr>
+)
 where
     T: Float + NumCast + std::cmp::PartialOrd + SampleUniform + std::fmt::Debug + Equivalence,
     Standard: Distribution<T>,
@@ -38,13 +39,6 @@ where
     for<'a> &'a V: Add<Output = V>,
     for<'a> &'a V: Sub<Output = V>,
     for<'a> &'a V: Mul<T, Output = V>,
-    W: Clone + IndexMut<usize, Output = V> + HasLen,
-    X: Clone
-        + IndexMut<usize, Output = T>
-        + HasLen
-        + Resizeable<ElmType = T>
-        + AsRef<[T]>
-        + AsMut<[T]>,
     F: Fn(&V) -> T + ?Sized,
     C: CommunicatorCollectives,
     [T]: BufferMut,
@@ -53,21 +47,15 @@ where
     let root_rank = 0;
     let root_process = comm.process_at_rank(root_rank);
 
-    let (ref ensemble, ref cached_logprob) = *ensemble_logprob;
+    //let (ref ensemble, ref cached_logprob) = *ensemble_logprob;
     //    let cached_logprob = &ensemble_logprob.1;
-    let mut result_ensemble = ensemble.clone();
-    let mut result_logprob = cached_logprob.clone();
+    let mut result_ensemble:Vec<_> = ensemble.iter().cloned().collect();
+    let mut result_logprob:Vec<_> = cached_lp.iter().cloned().collect();
     //let pflogprob=Arc::new(&flogprob);
     let nwalkers = ensemble.len();
-
-    if nwalkers == 0 {
-        return Err(McmcErr::NWalkersIsZero);
-    }
-
-    if nwalkers % 2 != 0 {
-        return Err(McmcErr::NWalkersIsNotEven);
-    }
-
+    assert!(nwalkers!=0);
+    assert!(nwalkers%2==0);
+    assert!(ensemble.len()==cached_lp.len());
     let ndims: T = NumCast::from(ensemble[0].dimension()).unwrap();
 
     let half_nwalkers = nwalkers / 2;
@@ -103,12 +91,7 @@ where
         root_process.broadcast_into(AsMut::<[usize]>::as_mut(wg));
     }
 
-    let lp_cached = result_logprob.len() == nwalkers;
-
-    if !lp_cached {
-        result_logprob.resize(nwalkers, T::zero());
-    }
-    //let lp_cached=cached_logprob.len()!=0;
+    
 
     let comm_size = comm.size() as usize;
 
@@ -125,13 +108,7 @@ where
         if k >= nwalkers {
             break;
         }
-        let lp_last_y = if !lp_cached {
-            let yy1 = flogprob(&ensemble[k]);
-            result_logprob[k] = yy1;
-            yy1
-        } else {
-            cached_logprob[k]
-        };
+        let lp_last_y = cached_lp[k];
 
         let i = walker_group_id[k];
         let j = jvec[k];
@@ -156,6 +133,4 @@ where
         temp_root.broadcast_into(AsMut::<[T]>::as_mut(&mut result_ensemble[k]));
         temp_root.broadcast_into(&mut result_logprob[k]);
     }
-
-    Ok((result_ensemble, result_logprob))
 }
