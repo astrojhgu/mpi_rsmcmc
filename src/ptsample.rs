@@ -208,7 +208,7 @@ where
 }
 
 
-fn init<T, V, F, C>(
+pub fn init<T, V, F, C>(
     flogprob: &F,
     ensemble: &[V], 
     logprob: &mut [T],
